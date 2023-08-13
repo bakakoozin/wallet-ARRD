@@ -14,14 +14,11 @@ app.get('/', async (_req, res) => {
     const usersACollection = valhalla.collection('users')
     const usersBCollection = njord.collection('users')
         
-          // Récupération des deux listes d'utilisateurs
           const usersA = await usersACollection.find({}).toArray();
           const usersB = await usersBCollection.find({}).toArray();
       
-          // Création d'un objet pour stocker les utilisateurs par e-mail avec leurs wallet
           const usersByMail = {};
       
-          // Remplissage de l'objet utilisateursParEmail à partir de la liste utilisateursB
           usersB.forEach(usersB => {
             const email = usersB.email;
             const wallet = usersB.wallet;
@@ -33,7 +30,6 @@ app.get('/', async (_req, res) => {
             usersByMail[email].wallet += wallet;
           });
       
-          // Boucle sur la liste utilisateursA pour chercher et additionner les wallets
           usersA.forEach(usersA => {
             const email = usersA.email;
       
@@ -43,7 +39,6 @@ app.get('/', async (_req, res) => {
             }
           });
       
-          // Affichage des utilisateurs de la liste utilisateursA avec le wallet additionné
           usersA.forEach(usersA => {
             console.log(usersA);
         })
