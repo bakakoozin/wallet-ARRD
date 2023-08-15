@@ -11,38 +11,44 @@ const valhalla = client.db('valhalla_dev')
 app.get('/', async (_req, res) => {
   await client.connect()
 
-    const usersACollection = valhalla.collection('users')
-    const usersBCollection = njord.collection('users')
+  const NJORD_USERS = njord.collection('users')
+  const VALHALLA_USERS = valhalla.collection('users')
         
-          const usersA = await usersACollection.find({}).toArray();
-          const usersB = await usersBCollection.find({}).toArray();
+  const valhallaUsers = await VALHALLA_USERS.find({}).toArray()
+  const successEmails = []
+  const errorEmails = []
       
-          const usersByMail = {};
-      
-          usersB.forEach(usersB => {
-            const email = usersB.email;
-            const wallet = usersB.wallet;
-      
-            if (!usersByMail[email]) {
-              usersByMail[email] = { wallet: 0 };
-            }
-      
-            usersByMail[email].wallet += wallet;
-          });
-      
-          usersA.forEach(usersA => {
-            const email = usersA.email;
-      
-            if (usersByMail[email]) {
-              const walletToAdd = usersByMail[email].wallet;
-              usersA.wallet += walletToAdd;
-            }
-          });
-      
-          usersA.forEach(usersA => {
-            console.log(usersA);
-        })
+  for (const user of valhallaUsers) {
+    const userInNjord = await NJORD_USERS.findOne({ email: user.email })
+    if (!userInNjord) return
+  
+    const response = await VALHALLA_USERS.updateOne(
+      { email: user.email },
+      {
+        $set: {
+          wallet: userInNjord.wallet + userInNjord.wallet,
+        },
+      }
+    )
+  
+    if (response.modifiedCount > 0) {
+      successEmails.push(user.email)
+    } else {
+      errorEmails.push(user.email)
+    }
+  }
+ 
+  await VALHALLA_USERS.updateMany(
+    { email: { $in: successEmails } },
+    {$set: { wallet: 0 } }
+  )
 
-res.json(usersB)
+  res.json({
+    successEmails,
+    errorEmails,
+  })
+})
 
+app.listen(PORT, () => {
+  console.log(`🚀 Server listening on port ${PORT}`)
 })

@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "val": "nodemon valhalla_visu.js",
+    "njord": "nodemon njord_prod_visu.js"
   },
   "author": "",
   "license": "ISC",
