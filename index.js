@@ -5,42 +5,46 @@ const app = express()
 const { MongoClient } = require('mongodb')
 
 const client = new MongoClient(MONGO_URI)
-const njord = client.db('njord_prod')
+const njord = client.db('njord_dev')
 const valhalla = client.db('valhalla_dev')
 
 app.get('/', async (_req, res) => {
   await client.connect()
 
+  // nom des constants plus explicites, pas de A, B, hormis, dans les filtres
   const NJORD_USERS = njord.collection('users')
   const VALHALLA_USERS = valhalla.collection('users')
-        
+
   const valhallaUsers = await VALHALLA_USERS.find({}).toArray()
   const successEmails = []
   const errorEmails = []
-      
+
   for (const user of valhallaUsers) {
     const userInNjord = await NJORD_USERS.findOne({ email: user.email })
     if (!userInNjord) return
-  
+
     const response = await VALHALLA_USERS.updateOne(
       { email: user.email },
       {
         $set: {
-          wallet: userInNjord.wallet + userInNjord.wallet,
+          wallet: user.wallet + userInNjord.wallet,
+          numLicence: user.numLicence,
         },
       }
     )
-  
+
+    // Si la mise à jour a affecté au moins un document, on considère que c'était un succès.
     if (response.modifiedCount > 0) {
       successEmails.push(user.email)
     } else {
       errorEmails.push(user.email)
     }
   }
- 
-  await VALHALLA_USERS.updateMany(
+
+  // Reset wallets for migrated users
+  await NJORD_USERS.updateMany(
     { email: { $in: successEmails } },
-    {$set: { wallet: 0 } }
+    { $set: { wallet: 0 } }
   )
 
   res.json({

@@ -9,7 +9,7 @@ const client = new MongoClient(MONGO_URI)
 app.get('/', async (_req, res) => {
     await client.connect()
 
-    const database = client.db('njord_prod')
+    const database = client.db('njord_dev')
     const Users = database.collection('users')
     const users = await Users.find({}).toArray()
 
